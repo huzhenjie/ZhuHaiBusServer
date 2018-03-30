@@ -33,6 +33,7 @@ const feedback = (req, res) => {
 };
 
 // curl 'http://localhost:8484/api/news?index=0&size=2'
+// curl 'https://gogo.scrats.cn/zhuhaibus/api/news?index=0&size=2'
 const getNewsList = (req, res) => {
     let {index, size} = req.query;
     if (!index || !size || size <= 0 || index < 0) {
@@ -59,6 +60,7 @@ const getNewsList = (req, res) => {
 };
 
 // curl 'http://localhost:8484/api/news/14'
+// curl 'https://gogo.scrats.cn/zhuhaibus/api/news/14'
 const getNewsDetail = (req, res) => {
     let {news_id} = req.params;
     Co(function *() {

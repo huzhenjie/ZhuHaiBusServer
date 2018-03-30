@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import MySQLdb
 import time
+import datetime
 import json
 import os
 import requests
@@ -36,34 +37,60 @@ def close_mysal_conn(conn, cursor):
 	conn = None
 	cursor = None
 
-def insert_ignore_topic(conn, cursor, date, story_id, title, cover, ga_prefix):
-	sql = 'insert ignore into zhihu_topic set dt=%s,story_id=%s,title=%s,cover=%s,sort=%s'
-	print date, story_id, title, cover, ga_prefix
-	# cursor.execute(sql, (date, story_id, title, cover, ga_prefix, ))
-	# conn.commit()
+def insert_ignore_topic(conn, cursor, date, story_id, title, cover, ts, detail):
+	sql = 'select count(1) as total from news where origin_id=%s and title=%s'
+	cursor.execute(sql, (story_id, title, ))
+	exists = cursor.fetchone()[0] > 0
+	if exists:
+		return
+	sql = "insert ignore into news set dt=%s, pt='知乎日报', origin_id=%s, title=%s, cover=%s, news_ts=%s, detail=%s"
+	cursor.execute(sql, (date, story_id, title, cover, ts, detail, ))
+	conn.commit()
 
-def get_latest_stories():
-	res = command("curl --connect-timeout 10 -H 'Authorization: Bearer kx/28n6XTEWCV47tGELiCg' 'https://news-at.zhihu.com/api/7/stories/latest?client=0'")
-	# print res
+def topic_exist(conn, cursor, story_id, title):
+	sql = 'select count(1) as total from news where origin_id=%s and title=%s'
+	cursor.execute(sql, (story_id, title, ))
+	return cursor.fetchone()[0] > 0
+
+def get_detail(story_id):
+	res = command("curl --connect-timeout 10 'https://news-at.zhihu.com/api/7/story/%s'" % story_id)
+	json_obj = json.loads(res)
+	body = json_obj.get('body')
+	cover = json_obj.get('image')
+	return (body, cover)
+
+def get_stories(conn, cursor, stories_list=[], dt=None):
+	if not stories_list:
+		stories_list = []
+	cmd = "curl --connect-timeout 10 -H 'Authorization: Bearer kx/28n6XTEWCV47tGELiCg' 'https://news-at.zhihu.com/api/7/stories/latest?client=0'"
+	if dt:
+		cmd = "curl --connect-timeout 10 -H 'Authorization: Bearer kx/28n6XTEWCV47tGELiCg' 'https://news-at.zhihu.com/api/7/stories/before/" + dt + "?client=0'"
+	res = command(cmd)
 	json_obj = json.loads(res)
 	date = json_obj.get('date')
+	news_ts = '%.0f000' % (time.mktime(datetime.datetime.strptime(date, "%Y%m%d").timetuple()))
 	stories = json_obj.get('stories')
-	res = []
 	for story in stories:
 		images = story.get('images')
-		cover = images[0]
+		thumbnail = images[0]
 		story_id = story.get('id')
-		ga_prefix = story.get('ga_prefix')
 		title = story.get('title')
-		res.append((date, story_id, title, cover, ga_prefix))
-	return res
+		if topic_exist(conn, cursor, story_id, title):
+			continue
+		ga_prefix = story.get('ga_prefix')
+		(body, cover) = get_detail(story_id)
+		stories_list.append((date, story_id, title, cover, news_ts, body))
+	day_7_ago = int(time.strftime('%Y%m%d', time.localtime(time.time()-3600*24*7)))
+	if len(stories_list) > 100 or day_7_ago > int(date):
+		return stories_list
+	return get_stories(conn, cursor, stories_list, date)
 
 def main():
-	story_data = get_latest_stories()
 	conn, cursor = get_mysql_conn('localhost', 'zhuhaibus', 'root', '')
+	story_data = get_stories(conn, cursor)
 	for story in story_data:
-		(date, story_id, title, cover, ga_prefix) = story
-		insert_ignore_topic(conn, cursor, date, story_id, title, cover, ga_prefix)
+		(date, story_id, title, cover, news_ts, body) = story
+		insert_ignore_topic(conn, cursor, date, story_id, title, cover, news_ts, body)
 	close_mysal_conn(conn, cursor)
 
 if __name__ == '__main__':
