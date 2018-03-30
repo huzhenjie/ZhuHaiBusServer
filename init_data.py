@@ -88,6 +88,7 @@ def get_stories(conn, cursor, stories_list=[], dt=None):
 def main():
 	conn, cursor = get_mysql_conn('localhost', 'zhuhaibus', 'root', '')
 	story_data = get_stories(conn, cursor)
+	story_data.reverse()
 	for story in story_data:
 		(date, story_id, title, cover, news_ts, body) = story
 		insert_ignore_topic(conn, cursor, date, story_id, title, cover, news_ts, body)
