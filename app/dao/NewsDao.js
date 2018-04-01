@@ -1,5 +1,5 @@
 function * getNewsList(index, size) {
-    const sql = `select news_id,dt,pt,origin_id,title,news_ts,cover from news where news_id<? order by news_id desc limit ?`;
+    const sql = `select news_id,dt,pt,origin_id,title,news_ts,cover,tp from news where news_id<? order by news_id desc limit ?`;
     return yield Conn.query(sql,
         {replacements: [index, size], type: Sequelize.QueryTypes.SELECT});
 }
