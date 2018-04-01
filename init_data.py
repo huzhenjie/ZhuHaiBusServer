@@ -59,7 +59,8 @@ def get_detail(story_id):
 	body = json_obj.get('body')
 	soup = BeautifulSoup(body, 'html.parser')
 	[s.extract() for s in soup('script')]
-	img_soup = soup.find('img', {"class": "avatar"})
+	[s.extract() for s in soup.findAll('div', {'class': 'view-more'})]
+	img_soup = soup.find('img', {'class': 'avatar'})
 	if img_soup:
 		img_soup.extract()
 	cover = json_obj.get('image')
