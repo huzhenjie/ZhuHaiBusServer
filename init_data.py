@@ -5,6 +5,7 @@ import datetime
 import json
 import os
 import requests
+from bs4 import BeautifulSoup
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -56,8 +57,13 @@ def get_detail(story_id):
 	res = command("curl --connect-timeout 10 'https://news-at.zhihu.com/api/7/story/%s'" % story_id)
 	json_obj = json.loads(res)
 	body = json_obj.get('body')
+	soup = BeautifulSoup(body, 'html.parser')
+	[s.extract() for s in soup('script')]
+	img_soup = soup.find('img', {"class": "avatar"})
+	if img_soup:
+		img_soup.extract()
 	cover = json_obj.get('image')
-	return (body, cover)
+	return (soup.prettify(), cover)
 
 def get_stories(conn, cursor, stories_list=[], dt=None):
 	if not stories_list:
