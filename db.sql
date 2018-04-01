@@ -24,3 +24,5 @@ news_ts bigint unsigned not null default 0,
 detail text not null,
 primary key (news_id)
 ) engine=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+alter table news add tp varchar(16) not null default 'richtext' comment '新闻类型，richtext：富文本；video：视频；img：图片；url：网页';
