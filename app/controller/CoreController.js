@@ -32,6 +32,20 @@ const feedback = (req, res) => {
     });
 };
 
+const feedbackList = (req, res) => {
+    let {index, size} = req.query;
+    if (!index) {
+        index = 0;
+    }
+    if (!size) {
+        size = 10;
+    }
+    Co(function *() {
+        const data = FeedbackDao.getFeedbackList(index, size);
+        Res.success(res, data)
+    });
+};
+
 // curl 'http://localhost:8484/api/news?index=0&size=2'
 // curl 'https://gogo.scrats.cn/zhuhaibus/api/news?index=0&size=2'
 const getNewsList = (req, res) => {
@@ -73,5 +87,5 @@ const getNewsDetail = (req, res) => {
 };
 
 module.exports = {
-    feedback, getNewsList, getNewsDetail
+    feedback, getNewsList, getNewsDetail, feedbackList
 };

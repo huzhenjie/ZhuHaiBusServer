@@ -5,6 +5,12 @@ function * addFeedback(app, vc, vn, ch, contact, content) {
         {replacements: [app, vc, vn, ch, contact, content, create_ts], type: Sequelize.QueryTypes.INSERT});
 }
 
+function * getFeedbackList(index, size) {
+    const sql = 'select * from feedback order by create_ts desc limit ?, ?';
+    return yield Conn.query(sql,
+        {replacements: [index, size], type: Sequelize.QueryTypes.SELECT});
+}
+
 module.exports = {
-    addFeedback
+    addFeedback, getFeedbackList
 };
