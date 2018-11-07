@@ -41,7 +41,7 @@ const feedbackList = (req, res) => {
         size = 10;
     }
     Co(function *() {
-        const data = FeedbackDao.getFeedbackList(index, size);
+        const data = yield FeedbackDao.getFeedbackList(index, size);
         Res.success(res, data)
     });
 };
