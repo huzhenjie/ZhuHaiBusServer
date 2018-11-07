@@ -6,9 +6,10 @@ function * addFeedback(app, vc, vn, ch, contact, content) {
 }
 
 function * getFeedbackList(index, size) {
-    const sql = 'select * from feedback order by create_ts desc limit ?, ?';
-    return yield Conn.query(sql,
-        {replacements: [index, size], type: Sequelize.QueryTypes.SELECT});
+    const indexNum = parseInt(index);
+    const sizeNum = parseInt(size);
+    const sql = `select * from feedback order by create_ts desc limit ${indexNum},${sizeNum}`;
+    return yield Conn.query(sql, {type: Sequelize.QueryTypes.SELECT});
 }
 
 module.exports = {
